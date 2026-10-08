@@ -43,6 +43,12 @@ class FloatingOverlayService : Service() {
     private var isExpandedState by mutableStateOf(false)
     private var currentTempState by mutableStateOf("32.0 °C")
 
+    // Persistent switch states
+    private var aimBotState by mutableStateOf(false)
+    private var aimLockState by mutableStateOf(false)
+    private var boostAimState by mutableStateOf(false)
+    private var speedMobileState by mutableStateOf(false)
+
     private val handler = Handler(Looper.getMainLooper())
     private val tempRunnable = object : Runnable {
         override fun run() {
@@ -55,7 +61,7 @@ class FloatingOverlayService : Service() {
     }
 
     companion object {
-        const val CHANNEL_ID = "maxo_floating_channel"
+        const val CHANNEL_ID = "dragon_floating_channel"
         const val NOTIFICATION_ID = 1001
         const val ACTION_STOP_SERVICE = "com.example.service.ACTION_STOP"
     }
@@ -67,6 +73,12 @@ class FloatingOverlayService : Service() {
         windowManager = getSystemService(WINDOW_SERVICE) as WindowManager
         prefManager = PreferenceManager.getInstance(this)
         overlayLifecycleOwner = OverlayLifecycleOwner()
+
+        // Load saved switch states
+        aimBotState = prefManager.isAimBotEnabled
+        aimLockState = prefManager.isAimLockEnabled
+        boostAimState = prefManager.isBoostAimEnabled
+        speedMobileState = prefManager.isSpeedMobileEnabled
 
         createNotificationChannel()
         startForegroundServiceNotification()
@@ -93,10 +105,10 @@ class FloatingOverlayService : Service() {
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
             val channel = NotificationChannel(
                 CHANNEL_ID,
-                "MAXO Floating Panel",
+                "DRAGON Floating Panel",
                 NotificationManager.IMPORTANCE_LOW
             ).apply {
-                description = "MAXO Floating control panel service"
+                description = "DRAGON Floating control panel service"
                 setShowBadge(false)
             }
             val manager = getSystemService(NotificationManager::class.java)
@@ -126,8 +138,8 @@ class FloatingOverlayService : Service() {
         )
 
         val notification: Notification = NotificationCompat.Builder(this, CHANNEL_ID)
-            .setContentTitle("MAXO Overlay Active")
-            .setContentText("Tap to open MAXO Dashboard")
+            .setContentTitle("DRAGON Overlay Active")
+            .setContentText("Tap to open DRAGON Dashboard")
             .setSmallIcon(R.mipmap.ic_launcher)
             .setContentIntent(pendingIntent)
             .addAction(android.R.drawable.ic_menu_close_clear_cancel, "Close", stopPendingIntent)
@@ -214,6 +226,26 @@ class FloatingOverlayService : Service() {
                                     } catch (_: Exception) {}
                                 }
                             }
+                        },
+                        aimBot = aimBotState,
+                        onAimBotChange = {
+                            aimBotState = it
+                            prefManager.isAimBotEnabled = it
+                        },
+                        aimLock = aimLockState,
+                        onAimLockChange = {
+                            aimLockState = it
+                            prefManager.isAimLockEnabled = it
+                        },
+                        boostAim = boostAimState,
+                        onBoostAimChange = {
+                            boostAimState = it
+                            prefManager.isBoostAimEnabled = it
+                        },
+                        speedMobile = speedMobileState,
+                        onSpeedMobileChange = {
+                            speedMobileState = it
+                            prefManager.isSpeedMobileEnabled = it
                         }
                     )
                 }

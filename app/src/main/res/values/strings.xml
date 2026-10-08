@@ -1,6 +1,6 @@
 <resources>
-    <string name="app_name">MAXO</string>
-    <string name="login_title">MAXO</string>
+    <string name="app_name">DRAGON</string>
+    <string name="login_title">DRAGON</string>
     <string name="login_subtitle">CONTROL SYSTEM</string>
     <string name="key_hint">Enter License Key</string>
     <string name="show_password">SHOW PASSWORD</string>
@@ -15,6 +15,6 @@
     <string name="err_expired">اشتراک شما منقضی شده است</string>
     <string name="err_network">خطا در اتصال به اینترنت</string>
     <string name="login_success">لاگین موفق</string>
-    <string name="overlay_service_name">MAXO Overlay Service</string>
-    <string name="overlay_service_desc">MAXO floating control panel is active</string>
+    <string name="overlay_service_name">DRAGON Overlay Service</string>
+    <string name="overlay_service_desc">DRAGON floating control panel is active</string>
 </resources>

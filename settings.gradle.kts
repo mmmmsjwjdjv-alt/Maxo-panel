@@ -22,6 +22,6 @@ dependencyResolutionManagement {
   }
 }
 
-rootProject.name = "MAXO"
+rootProject.name = "DRAGON"
 
 include(":app")

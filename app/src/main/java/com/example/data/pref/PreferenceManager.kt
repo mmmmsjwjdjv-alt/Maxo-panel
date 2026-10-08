@@ -19,6 +19,12 @@ class PreferenceManager(context: Context) {
         private const val KEY_ALLOW_OFFLINE = "allow_offline"
         private const val KEY_OVERLAY_ACTIVE = "overlay_active"
 
+        // Floating switches persistent keys
+        private const val KEY_AIM_BOT = "switch_aim_bot"
+        private const val KEY_AIM_LOCK = "switch_aim_lock"
+        private const val KEY_BOOST_AIM = "switch_boost_aim"
+        private const val KEY_SPEED_MOBILE = "switch_speed_mobile"
+
         @Volatile
         private var instance: PreferenceManager? = null
 
@@ -60,6 +66,23 @@ class PreferenceManager(context: Context) {
     var isOverlayActive: Boolean
         get() = prefs.getBoolean(KEY_OVERLAY_ACTIVE, false)
         set(value) = prefs.edit().putBoolean(KEY_OVERLAY_ACTIVE, value).apply()
+
+    // Persistent floating switches
+    var isAimBotEnabled: Boolean
+        get() = prefs.getBoolean(KEY_AIM_BOT, false)
+        set(value) = prefs.edit().putBoolean(KEY_AIM_BOT, value).apply()
+
+    var isAimLockEnabled: Boolean
+        get() = prefs.getBoolean(KEY_AIM_LOCK, false)
+        set(value) = prefs.edit().putBoolean(KEY_AIM_LOCK, value).apply()
+
+    var isBoostAimEnabled: Boolean
+        get() = prefs.getBoolean(KEY_BOOST_AIM, false)
+        set(value) = prefs.edit().putBoolean(KEY_BOOST_AIM, value).apply()
+
+    var isSpeedMobileEnabled: Boolean
+        get() = prefs.getBoolean(KEY_SPEED_MOBILE, false)
+        set(value) = prefs.edit().putBoolean(KEY_SPEED_MOBILE, value).apply()
 
     fun saveAuthSuccess(
         key: String,

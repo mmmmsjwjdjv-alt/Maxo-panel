@@ -28,7 +28,6 @@ import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableFloatStateOf
-import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.runtime.withFrameNanos
@@ -69,7 +68,15 @@ fun FloatingOverlayUi(
     temperature: String,
     isPanelExpanded: Boolean,
     onToggleExpand: () -> Unit,
-    onDragDelta: (dx: Float, dy: Float) -> Unit
+    onDragDelta: (dx: Float, dy: Float) -> Unit,
+    aimBot: Boolean,
+    onAimBotChange: (Boolean) -> Unit,
+    aimLock: Boolean,
+    onAimLockChange: (Boolean) -> Unit,
+    boostAim: Boolean,
+    onBoostAimChange: (Boolean) -> Unit,
+    speedMobile: Boolean,
+    onSpeedMobileChange: (Boolean) -> Unit
 ) {
     if (!isPanelExpanded) {
         // COLLAPSED: PURE CIRCULAR DOLLAR ICON (52dp)
@@ -98,7 +105,7 @@ fun FloatingOverlayUi(
         ) {
             Image(
                 painter = painterResource(id = R.drawable.ic_dollar_button),
-                contentDescription = "MAXO Dollar",
+                contentDescription = "DRAGON Dollar",
                 modifier = Modifier.fillMaxSize()
             )
         }
@@ -162,14 +169,14 @@ fun FloatingOverlayUi(
                         .wrapContentHeight()
                         .padding(horizontal = 14.dp, vertical = 12.dp)
                 ) {
-                    // Header: Title + Telemetry (FPS & Temp)
+                    // Header: Title (DRAGON) + Telemetry (FPS & Temp)
                     Row(
                         modifier = Modifier.fillMaxWidth(),
                         verticalAlignment = Alignment.CenterVertically,
                         horizontalArrangement = Arrangement.SpaceBetween
                     ) {
                         Text(
-                            text = "MAXO",
+                            text = "DRAGON",
                             fontFamily = FontFamily.SansSerif,
                             fontWeight = FontWeight.ExtraBold,
                             fontSize = 14.sp,
@@ -231,17 +238,33 @@ fun FloatingOverlayUi(
 
                     Spacer(modifier = Modifier.height(8.dp))
 
-                    // 4 SWITCHES WITH ANIMATED ROWS AND SPRING BOUNCE
-                    PanelSwitchRow(title = "AIM BOT")
+                    // 4 PERSISTENT SWITCHES WITH ANIMATED ROWS AND SPRING BOUNCE
+                    PanelSwitchRow(
+                        title = "AIM BOT",
+                        checked = aimBot,
+                        onCheckedChange = onAimBotChange
+                    )
                     Spacer(modifier = Modifier.height(6.dp))
 
-                    PanelSwitchRow(title = "AIM LOCK")
+                    PanelSwitchRow(
+                        title = "AIM LOCK",
+                        checked = aimLock,
+                        onCheckedChange = onAimLockChange
+                    )
                     Spacer(modifier = Modifier.height(6.dp))
 
-                    PanelSwitchRow(title = "BOOST AIM")
+                    PanelSwitchRow(
+                        title = "BOOST AIM",
+                        checked = boostAim,
+                        onCheckedChange = onBoostAimChange
+                    )
                     Spacer(modifier = Modifier.height(6.dp))
 
-                    PanelSwitchRow(title = "SPEED MOBILE")
+                    PanelSwitchRow(
+                        title = "SPEED MOBILE",
+                        checked = speedMobile,
+                        onCheckedChange = onSpeedMobileChange
+                    )
                 }
             }
         }
@@ -250,18 +273,18 @@ fun FloatingOverlayUi(
 
 @Composable
 private fun PanelSwitchRow(
-    title: String
+    title: String,
+    checked: Boolean,
+    onCheckedChange: (Boolean) -> Unit
 ) {
-    var isChecked by remember { mutableStateOf(false) }
-
     val rowBgColor by animateColorAsState(
-        targetValue = if (isChecked) Color(0x33333333) else Color(0x70161616),
+        targetValue = if (checked) Color(0x33333333) else Color(0x70161616),
         animationSpec = tween(durationMillis = 220),
         label = "rowBg"
     )
 
     val rowBorderColor by animateColorAsState(
-        targetValue = if (isChecked) Color(0x55FFFFFF) else Color(0x18FFFFFF),
+        targetValue = if (checked) Color(0x55FFFFFF) else Color(0x18FFFFFF),
         animationSpec = tween(durationMillis = 220),
         label = "rowBorder"
     )
@@ -283,13 +306,13 @@ private fun PanelSwitchRow(
             fontWeight = FontWeight.Bold,
             fontSize = 12.sp,
             letterSpacing = 0.8.sp,
-            color = if (isChecked) PureWhite else Color(0xFFD0D0D0)
+            color = if (checked) PureWhite else Color(0xFFD0D0D0)
         )
 
         // Clean MaxoSwitch with lively spring animation & haptics
         MaxoSwitch(
-            checked = isChecked,
-            onCheckedChange = { isChecked = it },
+            checked = checked,
+            onCheckedChange = onCheckedChange,
             switchWidth = 46.dp,
             switchHeight = 24.dp
         )

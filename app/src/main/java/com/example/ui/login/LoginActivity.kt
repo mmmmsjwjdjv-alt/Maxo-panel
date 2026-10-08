@@ -317,7 +317,7 @@ fun LoginScreen(
                 ) {
                     Image(
                         painter = painterResource(id = R.drawable.app_launcher_foreground_image),
-                        contentDescription = "MAXO Emblem",
+                        contentDescription = "DRAGON Emblem",
                         modifier = Modifier.size(46.dp)
                     )
                 }
@@ -325,7 +325,7 @@ fun LoginScreen(
                 Spacer(modifier = Modifier.height(14.dp))
 
                 Text(
-                    text = "MAXO",
+                    text = "DRAGON",
                     style = androidx.compose.material3.MaterialTheme.typography.displayLarge,
                     color = PureWhite
                 )
@@ -654,7 +654,7 @@ fun LoginScreen(
 
                 // Footer note
                 Text(
-                    text = "MAXO SECURE ENGINE • V1.0",
+                    text = "DRAGON SECURE ENGINE • V1.0",
                     style = androidx.compose.material3.MaterialTheme.typography.labelSmall,
                     color = GrayMedium,
                     letterSpacing = 1.sp

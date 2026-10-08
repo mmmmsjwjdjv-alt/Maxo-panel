@@ -277,14 +277,14 @@ fun DashboardScreen(
                         ) {
                             Image(
                                 painter = painterResource(id = R.drawable.app_launcher_foreground_image),
-                                contentDescription = "MAXO",
+                                contentDescription = "DRAGON",
                                 modifier = Modifier.size(24.dp)
                             )
                         }
                         Spacer(modifier = Modifier.width(10.dp))
                         Column {
                             Text(
-                                text = "MAXO",
+                                text = "DRAGON",
                                 style = androidx.compose.material3.MaterialTheme.typography.titleLarge,
                                 fontWeight = FontWeight.ExtraBold,
                                 color = PureWhite,
