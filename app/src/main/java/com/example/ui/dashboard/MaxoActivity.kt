@@ -300,32 +300,6 @@ fun DashboardScreen(
                     }
 
                     Row(verticalAlignment = Alignment.CenterVertically) {
-                        // Status pill
-                        Row(
-                            modifier = Modifier
-                                .clip(RoundedCornerShape(12.dp))
-                                .background(GraySubtle)
-                                .border(1.dp, GrayBorder, RoundedCornerShape(12.dp))
-                                .padding(horizontal = 10.dp, vertical = 5.dp),
-                            verticalAlignment = Alignment.CenterVertically
-                        ) {
-                            Box(
-                                modifier = Modifier
-                                    .size(7.dp)
-                                    .clip(CircleShape)
-                                    .background(PureWhite)
-                            )
-                            Spacer(modifier = Modifier.width(6.dp))
-                            Text(
-                                text = "SYSTEM ONLINE",
-                                style = androidx.compose.material3.MaterialTheme.typography.labelSmall,
-                                color = PureWhite,
-                                fontWeight = FontWeight.Bold
-                            )
-                        }
-
-                        Spacer(modifier = Modifier.width(8.dp))
-
                         // Logout Button
                         IconButton(
                             onClick = onLogout,

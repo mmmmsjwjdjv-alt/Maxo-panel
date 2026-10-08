@@ -351,27 +351,18 @@ fun LoginScreen(
                             .padding(24.dp),
                         horizontalAlignment = Alignment.CenterHorizontally
                     ) {
-                        // Card Header Indicator
+                        // Card Header
                         Row(
                             modifier = Modifier.fillMaxWidth(),
                             verticalAlignment = Alignment.CenterVertically,
                             horizontalArrangement = Arrangement.SpaceBetween
                         ) {
-                            Row(verticalAlignment = Alignment.CenterVertically) {
-                                Box(
-                                    modifier = Modifier
-                                        .size(8.dp)
-                                        .clip(CircleShape)
-                                        .background(PureWhite)
-                                )
-                                Spacer(modifier = Modifier.width(8.dp))
-                                Text(
-                                    text = "SECURE ACCESS",
-                                    style = androidx.compose.material3.MaterialTheme.typography.labelSmall,
-                                    color = GrayLight,
-                                    letterSpacing = 1.5.sp
-                                )
-                            }
+                            Text(
+                                text = "AUTHENTICATION",
+                                style = androidx.compose.material3.MaterialTheme.typography.labelSmall,
+                                color = GrayLight,
+                                letterSpacing = 1.5.sp
+                            )
                             Icon(
                                 imageVector = Icons.Default.Shield,
                                 contentDescription = null,
