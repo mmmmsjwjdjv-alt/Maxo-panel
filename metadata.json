@@ -1,0 +1,7 @@
+{
+  "name": "MAXO",
+  "description": "Premium dark control panel, device diagnostics, and floating utility panel.",
+  "requestFramePermissions": [],
+  "majorCapabilities": ["MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"]
+}
+

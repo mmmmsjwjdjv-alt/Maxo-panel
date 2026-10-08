@@ -1,0 +1,189 @@
+<?xml version="1.0" encoding="utf-8"?>
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    android:id="@+id/panel_root"
+    android:layout_width="290dp"
+    android:layout_height="wrap_content"
+    android:orientation="vertical"
+    android:background="@drawable/bg_glass_panel"
+    android:padding="16dp">
+
+    <!-- Draggable Header -->
+    <LinearLayout
+        android:id="@+id/panel_header"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:orientation="horizontal"
+        android:gravity="center_vertical"
+        android:paddingBottom="10dp">
+
+        <View
+            android:layout_width="8dp"
+            android:layout_height="8dp"
+            android:background="@drawable/bg_exit_button"
+            android:layout_marginEnd="8dp" />
+
+        <TextView
+            android:layout_width="0dp"
+            android:layout_height="wrap_content"
+            android:layout_weight="1"
+            android:text="MAXO PANEL"
+            android:textColor="#FFFFFF"
+            android:textSize="14sp"
+            android:textStyle="bold"
+            android:letterSpacing="0.1" />
+
+        <ImageView
+            android:id="@+id/btn_close_panel"
+            android:layout_width="28dp"
+            android:layout_height="28dp"
+            android:padding="4dp"
+            android:src="@drawable/ic_close_white"
+            android:background="?android:attr/selectableItemBackgroundBorderless"
+            android:contentDescription="Close Panel" />
+    </LinearLayout>
+
+    <!-- User Information -->
+    <TextView
+        android:id="@+id/txt_panel_user"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:text="USER: ACTIVE"
+        android:textColor="#B0B0B0"
+        android:textSize="11sp"
+        android:fontFamily="monospace"
+        android:paddingBottom="10dp" />
+
+    <View
+        android:layout_width="match_parent"
+        android:layout_height="1dp"
+        android:background="#26FFFFFF"
+        android:layout_marginBottom="12dp" />
+
+    <!-- DISPLAY ONLY SWITCHES -->
+    <!-- 1. AIM BOT -->
+    <LinearLayout
+        android:layout_width="match_parent"
+        android:layout_height="44dp"
+        android:orientation="horizontal"
+        android:gravity="center_vertical"
+        android:background="@drawable/bg_panel_row"
+        android:paddingHorizontal="12dp"
+        android:layout_marginBottom="8dp">
+
+        <TextView
+            android:layout_width="0dp"
+            android:layout_height="wrap_content"
+            android:layout_weight="1"
+            android:text="AIM BOT"
+            android:textColor="#FFFFFF"
+            android:textSize="12sp"
+            android:textStyle="bold"
+            android:letterSpacing="0.05" />
+
+        <android.widget.Switch
+            android:id="@+id/switch_aim_bot"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content" />
+    </LinearLayout>
+
+    <!-- 2. AIM LOCK -->
+    <LinearLayout
+        android:layout_width="match_parent"
+        android:layout_height="44dp"
+        android:orientation="horizontal"
+        android:gravity="center_vertical"
+        android:background="@drawable/bg_panel_row"
+        android:paddingHorizontal="12dp"
+        android:layout_marginBottom="8dp">
+
+        <TextView
+            android:layout_width="0dp"
+            android:layout_height="wrap_content"
+            android:layout_weight="1"
+            android:text="AIM LOCK"
+            android:textColor="#FFFFFF"
+            android:textSize="12sp"
+            android:textStyle="bold"
+            android:letterSpacing="0.05" />
+
+        <android.widget.Switch
+            android:id="@+id/switch_aim_lock"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content" />
+    </LinearLayout>
+
+    <!-- 3. BOOST AIM -->
+    <LinearLayout
+        android:layout_width="match_parent"
+        android:layout_height="44dp"
+        android:orientation="horizontal"
+        android:gravity="center_vertical"
+        android:background="@drawable/bg_panel_row"
+        android:paddingHorizontal="12dp"
+        android:layout_marginBottom="8dp">
+
+        <TextView
+            android:layout_width="0dp"
+            android:layout_height="wrap_content"
+            android:layout_weight="1"
+            android:text="BOOST AIM"
+            android:textColor="#FFFFFF"
+            android:textSize="12sp"
+            android:textStyle="bold"
+            android:letterSpacing="0.05" />
+
+        <android.widget.Switch
+            android:id="@+id/switch_boost_aim"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content" />
+    </LinearLayout>
+
+    <!-- 4. SPEED MOBILE -->
+    <LinearLayout
+        android:layout_width="match_parent"
+        android:layout_height="44dp"
+        android:orientation="horizontal"
+        android:gravity="center_vertical"
+        android:background="@drawable/bg_panel_row"
+        android:paddingHorizontal="12dp"
+        android:layout_marginBottom="12dp">
+
+        <TextView
+            android:layout_width="0dp"
+            android:layout_height="wrap_content"
+            android:layout_weight="1"
+            android:text="SPEED MOBILE"
+            android:textColor="#FFFFFF"
+            android:textSize="12sp"
+            android:textStyle="bold"
+            android:letterSpacing="0.05" />
+
+        <android.widget.Switch
+            android:id="@+id/switch_speed_mobile"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content" />
+    </LinearLayout>
+
+    <TextView
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:text="DISPLAY ONLY • VISUAL DEMO"
+        android:textColor="#66FFFFFF"
+        android:textSize="9sp"
+        android:gravity="center"
+        android:fontFamily="monospace"
+        android:layout_marginBottom="12dp" />
+
+    <!-- Exit Overlay Button -->
+    <Button
+        android:id="@+id/btn_exit_overlay"
+        android:layout_width="match_parent"
+        android:layout_height="38dp"
+        android:text="CLOSE OVERLAY"
+        android:textColor="#000000"
+        android:background="@drawable/bg_exit_button"
+        android:textSize="11sp"
+        android:textStyle="bold"
+        android:letterSpacing="0.1" />
+
+</LinearLayout>
