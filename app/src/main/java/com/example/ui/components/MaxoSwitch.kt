@@ -23,6 +23,7 @@ import androidx.compose.ui.draw.clip
 import androidx.compose.ui.draw.shadow
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.semantics.Role
+import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
 import com.example.ui.theme.CardBorder
 import com.example.ui.theme.PureBlack
@@ -33,34 +34,34 @@ fun MaxoSwitch(
     checked: Boolean,
     onCheckedChange: (Boolean) -> Unit,
     modifier: Modifier = Modifier,
-    enabled: Boolean = true
+    enabled: Boolean = true,
+    switchWidth: Dp = 50.dp,
+    switchHeight: Dp = 26.dp
 ) {
-    val switchWidth = 52.dp
-    val switchHeight = 28.dp
-    val thumbSize = 22.dp
     val padding = 3.dp
+    val thumbSize = switchHeight - (padding * 2)
 
     val thumbOffset by animateDpAsState(
         targetValue = if (checked) switchWidth - thumbSize - padding else padding,
-        animationSpec = tween(durationMillis = 240, easing = FastOutSlowInEasing),
+        animationSpec = tween(durationMillis = 200, easing = FastOutSlowInEasing),
         label = "thumbOffset"
     )
 
     val trackBgColor by animateColorAsState(
         targetValue = if (checked) PureWhite else PureBlack,
-        animationSpec = tween(durationMillis = 200),
+        animationSpec = tween(durationMillis = 180),
         label = "trackBgColor"
     )
 
     val trackBorderColor by animateColorAsState(
         targetValue = if (checked) PureWhite else CardBorder,
-        animationSpec = tween(durationMillis = 200),
+        animationSpec = tween(durationMillis = 180),
         label = "trackBorderColor"
     )
 
     val thumbColor by animateColorAsState(
         targetValue = if (checked) PureBlack else PureWhite,
-        animationSpec = tween(durationMillis = 200),
+        animationSpec = tween(durationMillis = 180),
         label = "thumbColor"
     )
 
@@ -69,12 +70,12 @@ fun MaxoSwitch(
     Box(
         modifier = modifier
             .size(switchWidth, switchHeight)
-            .clip(RoundedCornerShape(16.dp))
+            .clip(RoundedCornerShape(switchHeight / 2))
             .background(trackBgColor)
             .border(
-                width = 1.5.dp,
+                width = 1.3.dp,
                 color = trackBorderColor,
-                shape = RoundedCornerShape(16.dp)
+                shape = RoundedCornerShape(switchHeight / 2)
             )
             .clickable(
                 interactionSource = interactionSource,

@@ -146,6 +146,21 @@ class FloatingOverlayService : Service() {
         }
     }
 
+    private fun getScreenBounds(): Pair<Int, Int> {
+        return if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.R) {
+            val windowMetrics = windowManager.currentWindowMetrics
+            val bounds = windowMetrics.bounds
+            Pair(bounds.width(), bounds.height())
+        } else {
+            @Suppress("DEPRECATION")
+            val display = windowManager.defaultDisplay
+            val size = android.graphics.Point()
+            @Suppress("DEPRECATION")
+            display.getSize(size)
+            Pair(size.x, size.y)
+        }
+    }
+
     private fun initComposeOverlay() {
         val overlayType = if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
             WindowManager.LayoutParams.TYPE_APPLICATION_OVERLAY
@@ -158,13 +173,12 @@ class FloatingOverlayService : Service() {
             WindowManager.LayoutParams.WRAP_CONTENT,
             WindowManager.LayoutParams.WRAP_CONTENT,
             overlayType,
-            WindowManager.LayoutParams.FLAG_NOT_FOCUSABLE or
-                    WindowManager.LayoutParams.FLAG_LAYOUT_NO_LIMITS,
+            WindowManager.LayoutParams.FLAG_NOT_FOCUSABLE,
             PixelFormat.TRANSLUCENT
         ).apply {
             gravity = Gravity.TOP or Gravity.START
             x = 40
-            y = 300
+            y = 260
         }
 
         val view = ComposeView(this).apply {
@@ -179,25 +193,27 @@ class FloatingOverlayService : Service() {
                         fps = fpsTracker.currentFps,
                         temperature = currentTempState,
                         isPanelExpanded = isExpandedState,
-                        onExpandPanel = {
-                            isExpandedState = true
-                        },
-                        onCollapsePanel = {
-                            isExpandedState = false
+                        onToggleExpand = {
+                            isExpandedState = !isExpandedState
                         },
                         onDragDelta = { dx, dy ->
                             windowParams?.let { params ->
-                                params.x += dx.toInt()
-                                params.y += dy.toInt()
+                                val (screenWidth, screenHeight) = getScreenBounds()
+                                val viewW = composeView?.width?.coerceAtLeast(100) ?: 100
+                                val viewH = composeView?.height?.coerceAtLeast(100) ?: 100
+
+                                val maxX = (screenWidth - viewW).coerceAtLeast(0)
+                                val maxY = (screenHeight - viewH).coerceAtLeast(0)
+
+                                params.x = (params.x + dx.toInt()).coerceIn(0, maxX)
+                                params.y = (params.y + dy.toInt()).coerceIn(0, maxY)
+
                                 composeView?.let { cv ->
                                     try {
                                         windowManager.updateViewLayout(cv, params)
                                     } catch (_: Exception) {}
                                 }
                             }
-                        },
-                        onCloseService = {
-                            stopSelf()
                         }
                     )
                 }
