@@ -1,5 +1,7 @@
 package com.example.service
 
+import androidx.compose.animation.animateColorAsState
+import androidx.compose.animation.core.tween
 import androidx.compose.foundation.Canvas
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
@@ -8,6 +10,7 @@ import androidx.compose.foundation.clickable
 import androidx.compose.foundation.gestures.detectDragGestures
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.layout.BoxScope
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
@@ -17,6 +20,7 @@ import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
+import androidx.compose.foundation.layout.wrapContentHeight
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.Text
@@ -68,7 +72,7 @@ fun FloatingOverlayUi(
     onDragDelta: (dx: Float, dy: Float) -> Unit
 ) {
     if (!isPanelExpanded) {
-        // COLLAPSED: PURE CIRCULAR DOLLAR ICON (52dp) - NO FAINT CUBE OR EXTRA BORDERS
+        // COLLAPSED: PURE CIRCULAR DOLLAR ICON (52dp)
         Box(
             modifier = Modifier
                 .size(52.dp)
@@ -99,10 +103,11 @@ fun FloatingOverlayUi(
             )
         }
     } else {
-        // EXPANDED: DOLLAR BUTTON AT TOP-LEFT ATTACHED TO THE COMPACT MAXO PANEL
+        // EXPANDED: DOLLAR AT TOP-LEFT ATTACHED TO THE COMPACT CARD
         Column(
             modifier = Modifier
                 .width(245.dp)
+                .wrapContentHeight()
                 .pointerInput(Unit) {
                     detectDragGestures { change, dragAmount ->
                         change.consume()
@@ -126,15 +131,16 @@ fun FloatingOverlayUi(
                 )
             }
 
-            // COMPACT SLEEK FROSTED GLASS CARD (NOT ELONGATED)
+            // COMPACT SLEEK CARD (TIGHT TO CONTENT, NO EXTENSION AT BOTTOM)
             Box(
                 modifier = Modifier
                     .fillMaxWidth()
+                    .wrapContentHeight()
                     .clip(RoundedCornerShape(16.dp))
                     .background(
                         Brush.verticalGradient(
                             colors = listOf(
-                                Color(0xF2141414),
+                                Color(0xF4141414),
                                 Color(0xF80C0C0C),
                                 Color(0xFA070707)
                             )
@@ -146,13 +152,14 @@ fun FloatingOverlayUi(
                         shape = RoundedCornerShape(16.dp)
                     )
             ) {
-                // Background live micro-particles inside the card
+                // Background live micro-particles sized strictly to the card's actual height
                 PanelParticlesBackground()
 
-                // Card content
+                // Card content (determines card height cleanly)
                 Column(
                     modifier = Modifier
                         .fillMaxWidth()
+                        .wrapContentHeight()
                         .padding(horizontal = 14.dp, vertical = 12.dp)
                 ) {
                     // Header: Title + Telemetry (FPS & Temp)
@@ -224,7 +231,7 @@ fun FloatingOverlayUi(
 
                     Spacer(modifier = Modifier.height(8.dp))
 
-                    // 4 SWITCHES - USING EXACT CLEAN MaxoSwitch FROM LOGIN
+                    // 4 SWITCHES WITH ANIMATED ROWS AND SPRING BOUNCE
                     PanelSwitchRow(title = "AIM BOT")
                     Spacer(modifier = Modifier.height(6.dp))
 
@@ -247,13 +254,25 @@ private fun PanelSwitchRow(
 ) {
     var isChecked by remember { mutableStateOf(false) }
 
+    val rowBgColor by animateColorAsState(
+        targetValue = if (isChecked) Color(0x33333333) else Color(0x70161616),
+        animationSpec = tween(durationMillis = 220),
+        label = "rowBg"
+    )
+
+    val rowBorderColor by animateColorAsState(
+        targetValue = if (isChecked) Color(0x55FFFFFF) else Color(0x18FFFFFF),
+        animationSpec = tween(durationMillis = 220),
+        label = "rowBorder"
+    )
+
     Row(
         modifier = Modifier
             .fillMaxWidth()
-            .height(36.dp)
+            .height(38.dp)
             .clip(RoundedCornerShape(10.dp))
-            .background(Color(0x80181818))
-            .border(1.dp, Color(0x18FFFFFF), RoundedCornerShape(10.dp))
+            .background(rowBgColor)
+            .border(1.dp, rowBorderColor, RoundedCornerShape(10.dp))
             .padding(horizontal = 10.dp),
         verticalAlignment = Alignment.CenterVertically,
         horizontalArrangement = Arrangement.SpaceBetween
@@ -264,31 +283,31 @@ private fun PanelSwitchRow(
             fontWeight = FontWeight.Bold,
             fontSize = 12.sp,
             letterSpacing = 0.8.sp,
-            color = PureWhite
+            color = if (isChecked) PureWhite else Color(0xFFD0D0D0)
         )
 
-        // Exact clean MaxoSwitch from login screen (thick, rounded, B&W, no dots, no halos)
+        // Clean MaxoSwitch with lively spring animation & haptics
         MaxoSwitch(
             checked = isChecked,
             onCheckedChange = { isChecked = it },
-            switchWidth = 44.dp,
+            switchWidth = 46.dp,
             switchHeight = 24.dp
         )
     }
 }
 
 @Composable
-private fun PanelParticlesBackground() {
+private fun BoxScope.PanelParticlesBackground() {
     val particles = remember {
         val rand = Random(42)
-        List(22) {
+        List(18) {
             TinyParticle(
                 x = rand.nextFloat(),
                 y = rand.nextFloat(),
                 speedX = (rand.nextFloat() - 0.5f) * 0.03f,
                 speedY = -(rand.nextFloat() * 0.04f + 0.015f),
                 size = rand.nextFloat() * 2f + 1f,
-                alpha = rand.nextFloat() * 0.35f + 0.1f,
+                alpha = rand.nextFloat() * 0.3f + 0.1f,
                 wobble = rand.nextFloat() * 3f + 1f
             )
         }
@@ -321,7 +340,8 @@ private fun PanelParticlesBackground() {
         }
     }
 
-    Canvas(modifier = Modifier.fillMaxSize()) {
+    // CRITICAL: matchParentSize() makes the canvas match EXACTLY the height of the sibling Column content
+    Canvas(modifier = Modifier.matchParentSize()) {
         val t = tick.floatValue
         val w = size.width
         val h = size.height
