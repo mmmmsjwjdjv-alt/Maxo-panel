@@ -117,19 +117,16 @@ class LoginActivity : ComponentActivity() {
         val initialSaveState = prefManager.isSavePasswordEnabled
         val deviceId = Settings.Secure.getString(contentResolver, Settings.Secure.ANDROID_ID) ?: "UNKNOWN"
 
-        setContent {
-            MaxoTheme {
-                LoginScreen(
-                    initialKey = initialSavedKey,
-                    initialSavePassword = initialSaveState,
-                    deviceId = deviceId,
-                    onCopyDeviceId = { copyDeviceIdToClipboard(deviceId) },
-                    onLoginAttempt = { enteredKey, saveEnabled, onComplete ->
-                        performLogin(enteredKey, saveEnabled, onComplete)
-                    }
-                )
+        LoginUiRenderer.setup(
+            activity = this,
+            initialSavedKey = initialSavedKey,
+            initialSaveState = initialSaveState,
+            deviceId = deviceId,
+            onCopyDeviceId = { copyDeviceIdToClipboard(deviceId) },
+            onLoginAttempt = { enteredKey, saveEnabled, onComplete ->
+                performLogin(enteredKey, saveEnabled, onComplete)
             }
-        }
+        )
     }
 
     private fun copyDeviceIdToClipboard(deviceId: String) {
@@ -262,7 +259,10 @@ class LoginActivity : ComponentActivity() {
     }
 
     private fun startDashboardAndFinish() {
-        val intent = Intent(applicationContext, MaxoActivity::class.java)
+        val token = com.example.util.SecurityGuard.generateNewSessionToken()
+        val intent = Intent(applicationContext, MaxoActivity::class.java).apply {
+            putExtra("EXTRA_SESSION_TOKEN", token)
+        }
         startActivity(intent)
         finish()
     }

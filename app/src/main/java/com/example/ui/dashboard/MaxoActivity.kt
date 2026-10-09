@@ -97,8 +97,12 @@ import com.example.ui.theme.PureBlack
 import com.example.ui.theme.PureWhite
 import com.example.util.DeviceInfoUtils
 import com.example.util.DeviceSnapshot
+import com.example.util.SecurityGuard
 import com.example.util.SubscriptionDetails
 import com.example.util.SubscriptionUtils
+import androidx.lifecycle.lifecycleScope
+import kotlinx.coroutines.isActive
+import kotlinx.coroutines.launch
 import kotlinx.coroutines.delay
 
 class MaxoActivity : ComponentActivity() {
@@ -125,44 +129,84 @@ class MaxoActivity : ComponentActivity() {
             return
         }
 
-        setContent {
-            MaxoTheme {
-                val lifecycleOwner = LocalLifecycleOwner.current
-                var isOverlayRunning by remember { mutableStateOf(isServiceRunning(FloatingOverlayService::class.java)) }
+        // 1. Session Token Integrity Check
+        val sessionToken = intent.getStringExtra("EXTRA_SESSION_TOKEN")
+        if (!SecurityGuard.isSessionValid(sessionToken)) {
+            Toast.makeText(this, getString(R.string.security_token_invalid), Toast.LENGTH_LONG).show()
+            SecurityGuard.invalidateSession()
+            prefManager.logout()
+            startLoginActivityAndFinish()
+            return
+        }
 
-                DisposableEffect(lifecycleOwner) {
-                    val observer = LifecycleEventObserver { _, event ->
-                        if (event == Lifecycle.Event.ON_RESUME) {
-                            isOverlayRunning = isServiceRunning(FloatingOverlayService::class.java)
-                        }
-                    }
-                    lifecycleOwner.lifecycle.addObserver(observer)
-                    onDispose {
-                        lifecycleOwner.lifecycle.removeObserver(observer)
-                    }
-                }
+        // 2. Anti-Tamper & Debugger Check
+        if (SecurityGuard.isDebuggerAttached() || SecurityGuard.isHookFrameworkPresent()) {
+            Toast.makeText(this, getString(R.string.security_tamper_detected), Toast.LENGTH_LONG).show()
+            SecurityGuard.invalidateSession()
+            prefManager.logout()
+            finishAffinity()
+            return
+        }
 
-                DashboardScreen(
-                    userKey = prefManager.userKey,
-                    expiryDate = prefManager.expiryDate,
-                    isOverlayRunning = isOverlayRunning,
-                    onToggleOverlay = { enable ->
-                        if (enable) {
-                            requestOverlayAndStart()
-                            isOverlayRunning = true
-                        } else {
-                            stopFloatingService()
-                            isOverlayRunning = false
-                        }
-                    },
-                    onLogout = {
+        // 3. Network Check
+        if (!SecurityGuard.isNetworkAvailable(this) && !prefManager.allowOffline) {
+            Toast.makeText(this, getString(R.string.security_network_required), Toast.LENGTH_LONG).show()
+            SecurityGuard.invalidateSession()
+            prefManager.logout()
+            startLoginActivityAndFinish()
+            return
+        }
+
+        // 4. Periodic 30-Second Cloud License Heartbeat
+        lifecycleScope.launch {
+            while (isActive) {
+                delay(30_000L)
+                if (!SecurityGuard.isNetworkAvailable(this@MaxoActivity)) {
+                    if (!prefManager.allowOffline) {
+                        Toast.makeText(this@MaxoActivity, getString(R.string.security_network_required), Toast.LENGTH_LONG).show()
                         stopFloatingService()
+                        SecurityGuard.invalidateSession()
                         prefManager.logout()
                         startLoginActivityAndFinish()
+                        break
                     }
-                )
+                } else {
+                    val authResult = SecurityGuard.verifyRemoteLicense(this@MaxoActivity, prefManager.userKey)
+                    when (authResult) {
+                        is com.example.data.auth.AuthResult.Success -> {
+                            // License verified and active
+                        }
+                        else -> {
+                            Toast.makeText(this@MaxoActivity, getString(R.string.security_license_revoked), Toast.LENGTH_LONG).show()
+                            stopFloatingService()
+                            SecurityGuard.invalidateSession()
+                            prefManager.logout()
+                            startLoginActivityAndFinish()
+                            break
+                        }
+                    }
+                }
             }
         }
+
+        MaxoUiRenderer.setup(
+            activity = this,
+            userKey = prefManager.userKey,
+            expiryDate = prefManager.expiryDate,
+            checkServiceRunning = { isServiceRunning(FloatingOverlayService::class.java) },
+            onToggleOverlay = { enable ->
+                if (enable) {
+                    requestOverlayAndStart()
+                } else {
+                    stopFloatingService()
+                }
+            },
+            onLogout = {
+                stopFloatingService()
+                prefManager.logout()
+                startLoginActivityAndFinish()
+            }
+        )
     }
 
     private fun requestOverlayAndStart() {
@@ -184,13 +228,17 @@ class MaxoActivity : ComponentActivity() {
         } else {
             startService(intent)
         }
-        Toast.makeText(this, "ON THE PANEL: ACTIVATED", Toast.LENGTH_SHORT).show()
+        Toast.makeText(this, "FLOATING MENU: ACTIVATED", Toast.LENGTH_SHORT).show()
     }
 
     private fun stopFloatingService() {
         val intent = Intent(this, FloatingOverlayService::class.java)
         stopService(intent)
-        Toast.makeText(this, "ON THE PANEL: STOPPED", Toast.LENGTH_SHORT).show()
+        prefManager.isAimBotEnabled = false
+        prefManager.isAimLockEnabled = false
+        prefManager.isBoostAimEnabled = false
+        prefManager.isSpeedMobileEnabled = false
+        Toast.makeText(this, "FLOATING MENU: STOPPED", Toast.LENGTH_SHORT).show()
     }
 
     @Suppress("DEPRECATION")
@@ -803,14 +851,14 @@ fun OnThePanelCard(
 
                     Column {
                         Text(
-                            text = "ON THE PANEL",
+                            text = "FLOATING MENU",
                             style = androidx.compose.material3.MaterialTheme.typography.titleMedium,
                             fontWeight = FontWeight.ExtraBold,
                             color = PureWhite,
                             letterSpacing = 1.sp
                         )
                         Text(
-                            text = if (isRunning) "FLOATING OVERLAY ACTIVE" else "FLOATING OVERLAY DISABLED",
+                            text = if (isRunning) "FLOATING MENU ACTIVE" else "FLOATING MENU DISABLED",
                             style = androidx.compose.material3.MaterialTheme.typography.labelSmall,
                             color = if (isRunning) PureWhite else GrayMedium
                         )
@@ -850,7 +898,7 @@ fun OnThePanelCard(
                 shape = RoundedCornerShape(12.dp)
             ) {
                 Text(
-                    text = if (isRunning) "DEACTIVATE FLOATING PANEL" else "ACTIVATE FLOATING PANEL",
+                    text = if (isRunning) "DEACTIVATE FLOATING MENU" else "ACTIVATE FLOATING MENU",
                     style = androidx.compose.material3.MaterialTheme.typography.labelLarge,
                     color = if (isRunning) PureWhite else PureBlack,
                     fontWeight = FontWeight.Bold,

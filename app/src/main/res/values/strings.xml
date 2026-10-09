@@ -15,6 +15,10 @@
     <string name="err_expired">اشتراک شما منقضی شده است</string>
     <string name="err_network">خطا در اتصال به اینترنت</string>
     <string name="login_success">لاگین موفق</string>
+    <string name="security_tamper_detected">خطای امنیتی: دستکاری در برنامه شناسایی شد</string>
+    <string name="security_token_invalid">خطای امنیتی: توکن احراز هویت نامعتبر است</string>
+    <string name="security_network_required">لطفاً اتصال اینترنت خود را روشن کنید</string>
+    <string name="security_license_revoked">اعتبار لایسنس شما منقضی یا لغو شد</string>
     <string name="overlay_service_name">DRAGON Overlay Service</string>
     <string name="overlay_service_desc">DRAGON floating control panel is active</string>
 </resources>

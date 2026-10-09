@@ -53,6 +53,10 @@ class FloatingOverlayService : Service() {
     private val tempRunnable = object : Runnable {
         override fun run() {
             try {
+                if (!prefManager.isLoggedIn) {
+                    stopSelf()
+                    return
+                }
                 val snapshot = DeviceInfoUtils.getDeviceSnapshot(applicationContext)
                 currentTempState = snapshot.temperatureText
             } catch (_: Exception) {}
@@ -74,11 +78,15 @@ class FloatingOverlayService : Service() {
         prefManager = PreferenceManager.getInstance(this)
         overlayLifecycleOwner = OverlayLifecycleOwner()
 
-        // Load saved switch states
-        aimBotState = prefManager.isAimBotEnabled
-        aimLockState = prefManager.isAimLockEnabled
-        boostAimState = prefManager.isBoostAimEnabled
-        speedMobileState = prefManager.isSpeedMobileEnabled
+        // Reset switch states on clean service session
+        aimBotState = false
+        aimLockState = false
+        boostAimState = false
+        speedMobileState = false
+        prefManager.isAimBotEnabled = false
+        prefManager.isAimLockEnabled = false
+        prefManager.isBoostAimEnabled = false
+        prefManager.isSpeedMobileEnabled = false
 
         createNotificationChannel()
         startForegroundServiceNotification()
@@ -261,6 +269,10 @@ class FloatingOverlayService : Service() {
     override fun onDestroy() {
         super.onDestroy()
         prefManager.isOverlayActive = false
+        prefManager.isAimBotEnabled = false
+        prefManager.isAimLockEnabled = false
+        prefManager.isBoostAimEnabled = false
+        prefManager.isSpeedMobileEnabled = false
         fpsTracker.stop()
         handler.removeCallbacks(tempRunnable)
 
