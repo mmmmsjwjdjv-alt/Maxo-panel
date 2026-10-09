@@ -7,6 +7,9 @@ on:
     branches: [ "**" ]
   workflow_dispatch:
 
+permissions:
+  contents: write
+
 jobs:
   build:
     name: Build Debug APK
@@ -53,3 +56,14 @@ jobs:
           path: build-output/DRAGON.apk
           if-no-files-found: error
           retention-days: 14
+
+      - name: Publish Direct APK to GitHub Release
+        if: github.ref == 'refs/heads/main' || github.ref == 'refs/heads/master'
+        uses: softprops/action-gh-release@v2
+        with:
+          tag_name: latest
+          name: "DRAGON APK Build"
+          body: "Direct download of compiled DRAGON.apk"
+          files: build-output/DRAGON.apk
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
