@@ -83,6 +83,7 @@ import com.example.data.pref.PreferenceManager
 import com.example.ui.components.GlassCard
 import com.example.ui.components.MaxoSwitch
 import com.example.ui.components.ParticlesBackground
+import com.example.ui.components.bouncyClick
 import com.example.ui.dashboard.MaxoActivity
 import com.example.ui.theme.CardBorder
 import com.example.ui.theme.DarkBackground
@@ -317,7 +318,7 @@ fun LoginScreen(
                 ) {
                     Image(
                         painter = painterResource(id = R.drawable.app_launcher_foreground_image),
-                        contentDescription = "DRAGON Emblem",
+                        contentDescription = "MAXO Emblem",
                         modifier = Modifier.size(46.dp)
                     )
                 }
@@ -325,7 +326,7 @@ fun LoginScreen(
                 Spacer(modifier = Modifier.height(14.dp))
 
                 Text(
-                    text = "DRAGON",
+                    text = "MAXO",
                     style = androidx.compose.material3.MaterialTheme.typography.displayLarge,
                     color = PureWhite
                 )
@@ -493,7 +494,7 @@ fun LoginScreen(
                                 .clip(RoundedCornerShape(14.dp))
                                 .background(Color(0xE6080808))
                                 .border(1.dp, CardBorder, RoundedCornerShape(14.dp))
-                                .clickable {
+                                .bouncyClick(scaleDown = 0.96f) {
                                     onCopyDeviceId()
                                     justCopied = true
                                     coroutineScope.launch {
@@ -654,7 +655,7 @@ fun LoginScreen(
 
                 // Footer note
                 Text(
-                    text = "DRAGON SECURE ENGINE • V1.0",
+                    text = "MAXO SECURE ENGINE • V1.0",
                     style = androidx.compose.material3.MaterialTheme.typography.labelSmall,
                     color = GrayMedium,
                     letterSpacing = 1.sp

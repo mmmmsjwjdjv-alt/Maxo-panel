@@ -24,6 +24,8 @@ class PreferenceManager(context: Context) {
         private const val KEY_AIM_LOCK = "switch_aim_lock"
         private const val KEY_BOOST_AIM = "switch_boost_aim"
         private const val KEY_SPEED_MOBILE = "switch_speed_mobile"
+        private const val KEY_ULTRA_FPS = "switch_ultra_fps"
+        private const val KEY_TOUCH_SENSITIVITY = "switch_touch_sensitivity"
 
         @Volatile
         private var instance: PreferenceManager? = null
@@ -84,6 +86,25 @@ class PreferenceManager(context: Context) {
         get() = prefs.getBoolean(KEY_SPEED_MOBILE, false)
         set(value) = prefs.edit().putBoolean(KEY_SPEED_MOBILE, value).apply()
 
+    var isUltraFpsEnabled: Boolean
+        get() = prefs.getBoolean(KEY_ULTRA_FPS, false)
+        set(value) = prefs.edit().putBoolean(KEY_ULTRA_FPS, value).apply()
+
+    var isTouchSensitivityEnabled: Boolean
+        get() = prefs.getBoolean(KEY_TOUCH_SENSITIVITY, false)
+        set(value) = prefs.edit().putBoolean(KEY_TOUCH_SENSITIVITY, value).apply()
+
+    fun resetFloatingSwitches() {
+        prefs.edit()
+            .putBoolean(KEY_AIM_BOT, false)
+            .putBoolean(KEY_AIM_LOCK, false)
+            .putBoolean(KEY_BOOST_AIM, false)
+            .putBoolean(KEY_SPEED_MOBILE, false)
+            .putBoolean(KEY_ULTRA_FPS, false)
+            .putBoolean(KEY_TOUCH_SENSITIVITY, false)
+            .apply()
+    }
+
     fun saveAuthSuccess(
         key: String,
         devId: String,
@@ -103,5 +124,6 @@ class PreferenceManager(context: Context) {
         prefs.edit()
             .putBoolean(KEY_LOGGED_IN, false)
             .apply()
+        resetFloatingSwitches()
     }
 }

@@ -48,6 +48,8 @@ class FloatingOverlayService : Service() {
     private var aimLockState by mutableStateOf(false)
     private var boostAimState by mutableStateOf(false)
     private var speedMobileState by mutableStateOf(false)
+    private var ultraFpsState by mutableStateOf(false)
+    private var touchSensitivityState by mutableStateOf(false)
 
     private val handler = Handler(Looper.getMainLooper())
     private val tempRunnable = object : Runnable {
@@ -65,7 +67,7 @@ class FloatingOverlayService : Service() {
     }
 
     companion object {
-        const val CHANNEL_ID = "dragon_floating_channel"
+        const val CHANNEL_ID = "maxo_floating_channel"
         const val NOTIFICATION_ID = 1001
         const val ACTION_STOP_SERVICE = "com.example.service.ACTION_STOP"
     }
@@ -83,10 +85,9 @@ class FloatingOverlayService : Service() {
         aimLockState = false
         boostAimState = false
         speedMobileState = false
-        prefManager.isAimBotEnabled = false
-        prefManager.isAimLockEnabled = false
-        prefManager.isBoostAimEnabled = false
-        prefManager.isSpeedMobileEnabled = false
+        ultraFpsState = false
+        touchSensitivityState = false
+        prefManager.resetFloatingSwitches()
 
         createNotificationChannel()
         startForegroundServiceNotification()
@@ -113,10 +114,10 @@ class FloatingOverlayService : Service() {
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
             val channel = NotificationChannel(
                 CHANNEL_ID,
-                "DRAGON Floating Panel",
+                "MAXO Floating Panel",
                 NotificationManager.IMPORTANCE_LOW
             ).apply {
-                description = "DRAGON Floating control panel service"
+                description = "MAXO Ultra-Luxury Floating Control Panel"
                 setShowBadge(false)
             }
             val manager = getSystemService(NotificationManager::class.java)
@@ -146,8 +147,8 @@ class FloatingOverlayService : Service() {
         )
 
         val notification: Notification = NotificationCompat.Builder(this, CHANNEL_ID)
-            .setContentTitle("DRAGON Overlay Active")
-            .setContentText("Tap to open DRAGON Dashboard")
+            .setContentTitle("MAXO Control Suite")
+            .setContentText("Tap to return to MAXO Dashboard")
             .setSmallIcon(R.mipmap.ic_launcher)
             .setContentIntent(pendingIntent)
             .addAction(android.R.drawable.ic_menu_close_clear_cancel, "Close", stopPendingIntent)
@@ -254,6 +255,16 @@ class FloatingOverlayService : Service() {
                         onSpeedMobileChange = {
                             speedMobileState = it
                             prefManager.isSpeedMobileEnabled = it
+                        },
+                        ultraFps = ultraFpsState,
+                        onUltraFpsChange = {
+                            ultraFpsState = it
+                            prefManager.isUltraFpsEnabled = it
+                        },
+                        touchSensitivity = touchSensitivityState,
+                        onTouchSensitivityChange = {
+                            touchSensitivityState = it
+                            prefManager.isTouchSensitivityEnabled = it
                         }
                     )
                 }
@@ -269,10 +280,7 @@ class FloatingOverlayService : Service() {
     override fun onDestroy() {
         super.onDestroy()
         prefManager.isOverlayActive = false
-        prefManager.isAimBotEnabled = false
-        prefManager.isAimLockEnabled = false
-        prefManager.isBoostAimEnabled = false
-        prefManager.isSpeedMobileEnabled = false
+        prefManager.resetFloatingSwitches()
         fpsTracker.stop()
         handler.removeCallbacks(tempRunnable)
 

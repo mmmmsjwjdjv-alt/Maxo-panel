@@ -1,6 +1,6 @@
 {
-  "name": "DRAGON",
-  "description": "DRAGON Premium dark control system, telemetry dashboard, and floating utility panel.",
+  "name": "MAXO",
+  "description": "MAXO Ultra-Luxury Control System, Advanced Floating Utility Suite, and Telemetry Engine.",
   "requestFramePermissions": [],
   "majorCapabilities": ["MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"]
 }

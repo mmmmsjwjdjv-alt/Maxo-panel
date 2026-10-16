@@ -228,17 +228,14 @@ class MaxoActivity : ComponentActivity() {
         } else {
             startService(intent)
         }
-        Toast.makeText(this, "FLOATING MENU: ACTIVATED", Toast.LENGTH_SHORT).show()
+        Toast.makeText(this, "MAXO SUITE: ACTIVATED", Toast.LENGTH_SHORT).show()
     }
 
     private fun stopFloatingService() {
         val intent = Intent(this, FloatingOverlayService::class.java)
         stopService(intent)
-        prefManager.isAimBotEnabled = false
-        prefManager.isAimLockEnabled = false
-        prefManager.isBoostAimEnabled = false
-        prefManager.isSpeedMobileEnabled = false
-        Toast.makeText(this, "FLOATING MENU: STOPPED", Toast.LENGTH_SHORT).show()
+        prefManager.resetFloatingSwitches()
+        Toast.makeText(this, "MAXO SUITE: STOPPED", Toast.LENGTH_SHORT).show()
     }
 
     @Suppress("DEPRECATION")
@@ -325,14 +322,14 @@ fun DashboardScreen(
                         ) {
                             Image(
                                 painter = painterResource(id = R.drawable.app_launcher_foreground_image),
-                                contentDescription = "DRAGON",
+                                contentDescription = "MAXO",
                                 modifier = Modifier.size(24.dp)
                             )
                         }
                         Spacer(modifier = Modifier.width(10.dp))
                         Column {
                             Text(
-                                text = "DRAGON",
+                                text = "MAXO",
                                 style = androidx.compose.material3.MaterialTheme.typography.titleLarge,
                                 fontWeight = FontWeight.ExtraBold,
                                 color = PureWhite,
@@ -851,14 +848,14 @@ fun OnThePanelCard(
 
                     Column {
                         Text(
-                            text = "FLOATING MENU",
+                            text = "MAXO CONTROL SUITE",
                             style = androidx.compose.material3.MaterialTheme.typography.titleMedium,
                             fontWeight = FontWeight.ExtraBold,
                             color = PureWhite,
                             letterSpacing = 1.sp
                         )
                         Text(
-                            text = if (isRunning) "FLOATING MENU ACTIVE" else "FLOATING MENU DISABLED",
+                            text = if (isRunning) "MAXO SUITE ACTIVE" else "MAXO SUITE DISABLED",
                             style = androidx.compose.material3.MaterialTheme.typography.labelSmall,
                             color = if (isRunning) PureWhite else GrayMedium
                         )
@@ -875,7 +872,7 @@ fun OnThePanelCard(
             Spacer(modifier = Modifier.height(14.dp))
 
             Text(
-                text = "Enables the floating dollar emblem and draggable glassmorphic control panel above all applications. Tap the dollar icon anytime to access instant toggles.",
+                text = "Enables the floating 3D luxury dollar emblem and multi-tab control suite above all applications. Tap the dollar icon anytime to access Combat, Boost, and Hardware Telemetry.",
                 style = androidx.compose.material3.MaterialTheme.typography.bodyMedium,
                 color = GrayLight,
                 fontSize = 12.sp,
@@ -888,7 +885,7 @@ fun OnThePanelCard(
                 onClick = { onToggle(!isRunning) },
                 modifier = Modifier
                     .fillMaxWidth()
-                    .height(44.dp)
+                    .height(46.dp)
                     .clip(RoundedCornerShape(12.dp))
                     .testTag("on_the_panel_button"),
                 colors = ButtonDefaults.buttonColors(
@@ -898,7 +895,7 @@ fun OnThePanelCard(
                 shape = RoundedCornerShape(12.dp)
             ) {
                 Text(
-                    text = if (isRunning) "DEACTIVATE FLOATING MENU" else "ACTIVATE FLOATING MENU",
+                    text = if (isRunning) "DEACTIVATE CONTROL SUITE" else "ACTIVATE CONTROL SUITE",
                     style = androidx.compose.material3.MaterialTheme.typography.labelLarge,
                     color = if (isRunning) PureWhite else PureBlack,
                     fontWeight = FontWeight.Bold,
