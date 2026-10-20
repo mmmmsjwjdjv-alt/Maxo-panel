@@ -10,7 +10,6 @@ import androidx.compose.runtime.setValue
 import androidx.lifecycle.Lifecycle
 import androidx.lifecycle.LifecycleEventObserver
 import androidx.lifecycle.compose.LocalLifecycleOwner
-import com.example.service.FloatingOverlayService
 import com.example.ui.theme.MaxoTheme
 
 object MaxoUiRenderer {
@@ -20,7 +19,7 @@ object MaxoUiRenderer {
         userKey: String,
         expiryDate: String,
         checkServiceRunning: () -> Boolean,
-        onToggleOverlay: (Boolean) -> Unit,
+        onToggleOverlay: (Boolean, (Boolean) -> Unit) -> Unit,
         onLogout: () -> Unit
     ) {
         activity.setContent {
@@ -44,7 +43,13 @@ object MaxoUiRenderer {
                     userKey = userKey,
                     expiryDate = expiryDate,
                     isOverlayRunning = isOverlayRunning,
-                    onToggleOverlay = onToggleOverlay,
+                    onToggleOverlay = { targetState ->
+                        // Immediately flip switch UI state with spring physics
+                        isOverlayRunning = targetState
+                        onToggleOverlay(targetState) { confirmedState ->
+                            isOverlayRunning = confirmedState
+                        }
+                    },
                     onLogout = onLogout
                 )
             }
