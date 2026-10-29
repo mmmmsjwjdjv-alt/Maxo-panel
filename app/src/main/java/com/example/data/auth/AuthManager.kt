@@ -9,17 +9,18 @@ import kotlinx.coroutines.withContext
 import org.json.JSONArray
 import java.io.BufferedReader
 import java.io.InputStreamReader
-import java.net.HttpURLConnection
 import java.net.URL
 import java.text.SimpleDateFormat
 import java.util.Date
 import java.util.Locale
+import javax.net.ssl.HttpsURLConnection
 
 sealed class AuthResult {
     data class Success(val userRecord: UserRecord) : AuthResult()
     data object KeyNotFound : AuthResult()
     data object DeviceMismatch : AuthResult()
     data object Expired : AuthResult()
+    data object AccountBanned : AuthResult()
     data class NetworkError(val message: String) : AuthResult()
 }
 
@@ -45,15 +46,20 @@ class AuthManager(private val context: Context) {
 
         try {
             val url = URL(USER_DATABASE_URL)
-            val conn = (url.openConnection() as HttpURLConnection).apply {
+            val conn = (url.openConnection() as HttpsURLConnection).apply {
                 requestMethod = "GET"
                 connectTimeout = TIMEOUT_MS
                 readTimeout = TIMEOUT_MS
+                instanceFollowRedirects = false
+                setRequestProperty("User-Agent", "RedJohn-SecurityClient/3.0")
+                setRequestProperty("Cache-Control", "no-cache, no-store, must-revalidate")
+                setRequestProperty("Pragma", "no-cache")
+                setRequestProperty("Accept", "application/json")
                 doInput = true
             }
 
             val responseCode = conn.responseCode
-            if (responseCode != HttpURLConnection.HTTP_OK) {
+            if (responseCode != HttpsURLConnection.HTTP_OK) {
                 return@withContext checkOfflineFallback(enteredKey, currentDeviceId, "HTTP $responseCode")
             }
 
@@ -66,37 +72,49 @@ class AuthManager(private val context: Context) {
             reader.close()
             conn.disconnect()
 
-            val jsonArray = JSONArray(sb.toString())
+            val rawJson = sb.toString().trim()
+            if (rawJson.isEmpty()) {
+                return@withContext checkOfflineFallback(enteredKey, currentDeviceId, "Empty server response")
+            }
+
+            val jsonArray = JSONArray(rawJson)
 
             var keyExists = false
             var deviceMatches = false
             var expired = false
+            var isBanned = false
             var matchedRecord: UserRecord? = null
 
             for (i in 0 until jsonArray.length()) {
                 val obj = jsonArray.getJSONObject(i)
-                val jsonKey = obj.optString("key", "")
-                val jsonDeviceId = obj.optString("device_id", "")
+                val jsonKey = obj.optString("key", "").trim()
+                val jsonDeviceId = obj.optString("device_id", "").trim()
 
-                if (jsonKey == enteredKey) {
+                if (jsonKey.equals(enteredKey.trim(), ignoreCase = false)) {
                     keyExists = true
 
-                    if (jsonDeviceId == currentDeviceId) {
+                    // Check explicit ban/revocation flags in GitHub record
+                    val status = obj.optString("status", "").lowercase(Locale.US)
+                    val bannedFlag = obj.optBoolean("banned", false) || obj.optBoolean("is_banned", false)
+                    if (status == "banned" || status == "inactive" || status == "revoked" || bannedFlag) {
+                        isBanned = true
+                        break
+                    }
+
+                    if (jsonDeviceId.equals(currentDeviceId.trim(), ignoreCase = true)) {
                         deviceMatches = true
 
-                        val allowOffline = obj.optBoolean("Allowoffline", false)
-                        val expiryStr = obj.optString("expirydate", "")
+                        val allowOffline = obj.optBoolean("Allowoffline", false) ||
+                                obj.optString("Allowoffline", "false").equals("true", ignoreCase = true)
+                        val expiryStr = obj.optString("expirydate", "").trim()
 
-                        val sdf = SimpleDateFormat("dd-MM-yyyy", Locale.US)
-                        val expiryDate = try {
-                            sdf.parse(expiryStr)
-                        } catch (e: Exception) {
-                            null
-                        }
-
-                        val now = Date()
-                        if (expiryDate != null && now.after(expiryDate)) {
-                            expired = true
+                        // Parse Expiration Date with multiple date format support
+                        if (!isPermanentExpiry(expiryStr)) {
+                            val parsedDate = parseExpiryDate(expiryStr)
+                            val now = Date()
+                            if (parsedDate != null && now.after(parsedDate)) {
+                                expired = true
+                            }
                         }
 
                         matchedRecord = UserRecord(
@@ -111,6 +129,7 @@ class AuthManager(private val context: Context) {
             }
 
             when {
+                isBanned -> AuthResult.AccountBanned
                 !keyExists -> AuthResult.KeyNotFound
                 !deviceMatches -> AuthResult.DeviceMismatch
                 expired -> AuthResult.Expired
@@ -130,6 +149,34 @@ class AuthManager(private val context: Context) {
         }
     }
 
+    private fun isPermanentExpiry(expiryStr: String): Boolean {
+        val lower = expiryStr.lowercase(Locale.US)
+        return lower.contains("permanent") ||
+                lower.contains("unlimited") ||
+                lower.contains("forever") ||
+                lower.contains("9999") ||
+                lower.contains("2099")
+    }
+
+    private fun parseExpiryDate(dateStr: String): Date? {
+        val formats = arrayOf(
+            "dd-MM-yyyy",
+            "yyyy-MM-dd",
+            "dd/MM/yyyy",
+            "yyyy/MM/dd",
+            "dd.MM.yyyy"
+        )
+        for (pattern in formats) {
+            try {
+                val sdf = SimpleDateFormat(pattern, Locale.US)
+                sdf.isLenient = false
+                val date = sdf.parse(dateStr)
+                if (date != null) return date
+            } catch (_: Exception) {}
+        }
+        return null
+    }
+
     private fun checkOfflineFallback(
         enteredKey: String,
         deviceId: String,
@@ -140,15 +187,12 @@ class AuthManager(private val context: Context) {
             prefManager.userKey == enteredKey &&
             prefManager.deviceId == deviceId
         ) {
-            val sdf = SimpleDateFormat("dd-MM-yyyy", Locale.US)
-            val expiryDate = try {
-                sdf.parse(prefManager.expiryDate)
-            } catch (e: Exception) {
-                null
-            }
-            val now = Date()
-            if (expiryDate != null && now.after(expiryDate)) {
-                return AuthResult.Expired
+            if (!isPermanentExpiry(prefManager.expiryDate)) {
+                val parsedDate = parseExpiryDate(prefManager.expiryDate)
+                val now = Date()
+                if (parsedDate != null && now.after(parsedDate)) {
+                    return AuthResult.Expired
+                }
             }
             return AuthResult.Success(
                 UserRecord(

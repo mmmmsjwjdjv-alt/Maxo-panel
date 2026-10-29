@@ -142,8 +142,8 @@ class MaxoActivity : ComponentActivity() {
             return
         }
 
-        // 2. Anti-Tamper & Debugger Check
-        if (SecurityGuard.isDebuggerAttached() || SecurityGuard.isHookFrameworkPresent()) {
+        // 2. Comprehensive Anti-Tamper, Root, Frida & Debugger Check
+        if (SecurityGuard.isSecurityCompromised()) {
             Toast.makeText(this, getString(R.string.security_tamper_detected), Toast.LENGTH_LONG).show()
             SecurityGuard.invalidateSession()
             prefManager.logout()
@@ -160,10 +160,10 @@ class MaxoActivity : ComponentActivity() {
             return
         }
 
-        // 4. Periodic 30-Second Cloud License Heartbeat
+        // 4. Periodic 20-Second Cloud License Heartbeat
         lifecycleScope.launch {
             while (isActive) {
-                delay(30_000L)
+                delay(20_000L)
                 if (!SecurityGuard.isNetworkAvailable(this@MaxoActivity)) {
                     if (!prefManager.allowOffline) {
                         Toast.makeText(this@MaxoActivity, getString(R.string.security_network_required), Toast.LENGTH_LONG).show()
@@ -368,14 +368,14 @@ private fun DashboardHeader(onLogout: () -> Unit) {
             ) {
                 Image(
                     painter = painterResource(id = R.drawable.app_launcher_foreground_image),
-                    contentDescription = "MAXO",
+                    contentDescription = "Red John",
                     modifier = Modifier.size(28.dp)
                 )
             }
             Spacer(modifier = Modifier.width(10.dp))
             Column {
                 Text(
-                    text = "MAXO",
+                    text = "RED JOHN",
                     style = androidx.compose.material3.MaterialTheme.typography.titleLarge,
                     fontWeight = FontWeight.Black,
                     color = PureWhite,
@@ -497,7 +497,7 @@ fun HeroLicenseCard(details: SubscriptionDetails, userKey: String) {
                     .border(1.dp, Color(0x28FFFFFF), RoundedCornerShape(12.dp))
                     .bouncyClick(scaleDown = 0.96f) {
                         val cm = context.getSystemService(Context.CLIPBOARD_SERVICE) as ClipboardManager
-                        cm.setPrimaryClip(ClipData.newPlainText("MAXO Key", userKey))
+                        cm.setPrimaryClip(ClipData.newPlainText("Red John Key", userKey))
                         copiedRecently = true
                         Toast.makeText(context, "LICENSE KEY COPIED", Toast.LENGTH_SHORT).show()
                     }
@@ -940,7 +940,7 @@ private fun SecurityAuditBadge() {
             )
         }
         Text(
-            text = "30s SYNC",
+            text = "20s SYNC",
             fontFamily = FontFamily.Monospace,
             fontSize = 8.5.sp,
             fontWeight = FontWeight.Bold,

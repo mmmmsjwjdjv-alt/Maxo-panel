@@ -1,4 +1,4 @@
-name: Build MAXO APK
+name: Build Red John APK
 
 on:
   push:
@@ -47,13 +47,13 @@ jobs:
             APK_FILE=$(find app/build/outputs/apk -name "*.apk" | head -n 1)
           fi
           echo "Found APK: $APK_FILE"
-          cp "$APK_FILE" build-output/MAXO.apk
+          cp "$APK_FILE" build-output/RedJohn.apk
 
-      - name: Upload MAXO APK
+      - name: Upload Red John APK
         uses: actions/upload-artifact@v4
         with:
-          name: MAXO-APK
-          path: build-output/MAXO.apk
+          name: RedJohn-APK
+          path: build-output/RedJohn.apk
           if-no-files-found: error
           retention-days: 14
 
@@ -62,8 +62,8 @@ jobs:
         uses: softprops/action-gh-release@v2
         with:
           tag_name: latest
-          name: "MAXO APK Build"
-          body: "Direct download of compiled MAXO.apk"
-          files: build-output/MAXO.apk
+          name: "Red John APK Build"
+          body: "Direct download of compiled RedJohn.apk"
+          files: build-output/RedJohn.apk
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}

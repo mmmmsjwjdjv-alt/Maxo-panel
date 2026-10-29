@@ -1,6 +1,6 @@
 <resources>
-    <string name="app_name">MAXO</string>
-    <string name="login_title">MAXO</string>
+    <string name="app_name">Red John</string>
+    <string name="login_title">Red John</string>
     <string name="login_subtitle">CONTROL SYSTEM</string>
     <string name="key_hint">Enter License Key</string>
     <string name="show_password">SHOW PASSWORD</string>
@@ -15,10 +15,10 @@
     <string name="err_expired">اشتراک شما منقضی شده است</string>
     <string name="err_network">خطا در اتصال به اینترنت</string>
     <string name="login_success">لاگین موفق</string>
-    <string name="security_tamper_detected">خطای امنیتی: دستکاری در برنامه شناسایی شد</string>
+    <string name="security_tamper_detected">خطای امنیتی: دستکاری یا ابزار روت/دیباگ در برنامه شناسایی شد</string>
     <string name="security_token_invalid">خطای امنیتی: توکن احراز هویت نامعتبر است</string>
     <string name="security_network_required">لطفاً اتصال اینترنت خود را روشن کنید</string>
     <string name="security_license_revoked">اعتبار لایسنس شما منقضی یا لغو شد</string>
-    <string name="overlay_service_name">MAXO Floating Service</string>
-    <string name="overlay_service_desc">MAXO ultra-luxury control suite is active</string>
+    <string name="overlay_service_name">Red John Floating Service</string>
+    <string name="overlay_service_desc">Red John ultra-luxury control suite is active</string>
 </resources>

@@ -114,10 +114,10 @@ class FloatingOverlayService : Service() {
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
             val channel = NotificationChannel(
                 CHANNEL_ID,
-                "MAXO Floating Panel",
+                "Red John Floating Panel",
                 NotificationManager.IMPORTANCE_LOW
             ).apply {
-                description = "MAXO Ultra-Luxury Floating Control Panel"
+                description = "Red John Ultra-Luxury Floating Control Panel"
                 setShowBadge(false)
             }
             val manager = getSystemService(NotificationManager::class.java)
@@ -147,8 +147,8 @@ class FloatingOverlayService : Service() {
         )
 
         val notification: Notification = NotificationCompat.Builder(this, CHANNEL_ID)
-            .setContentTitle("MAXO Control Suite")
-            .setContentText("Tap to return to MAXO Dashboard")
+            .setContentTitle("Red John Control Suite")
+            .setContentText("Tap to return to Red John Dashboard")
             .setSmallIcon(R.mipmap.ic_launcher)
             .setContentIntent(pendingIntent)
             .addAction(android.R.drawable.ic_menu_close_clear_cancel, "Close", stopPendingIntent)

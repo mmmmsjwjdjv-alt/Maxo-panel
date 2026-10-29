@@ -10,9 +10,9 @@ import android.os.Vibrator
 import android.provider.Settings
 import android.widget.Toast
 import androidx.activity.ComponentActivity
-import androidx.activity.compose.setContent
 import androidx.activity.enableEdgeToEdge
 import androidx.compose.animation.AnimatedVisibility
+import androidx.compose.animation.core.tween
 import androidx.compose.animation.fadeIn
 import androidx.compose.animation.fadeOut
 import androidx.compose.foundation.Image
@@ -27,7 +27,6 @@ import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
-import androidx.compose.foundation.layout.imePadding
 import androidx.compose.foundation.layout.navigationBarsPadding
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
@@ -45,15 +44,17 @@ import androidx.compose.material.icons.filled.Check
 import androidx.compose.material.icons.filled.ContentCopy
 import androidx.compose.material.icons.filled.Key
 import androidx.compose.material.icons.filled.Shield
+import androidx.compose.material.icons.filled.Visibility
+import androidx.compose.material.icons.filled.VisibilityOff
 import androidx.compose.material3.Button
 import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.Icon
+import androidx.compose.material3.IconButton
 import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.OutlinedTextFieldDefaults
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
-import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
@@ -62,9 +63,9 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
+import androidx.compose.ui.focus.FocusDirection
 import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
-import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.platform.LocalFocusManager
 import androidx.compose.ui.platform.testTag
 import androidx.compose.ui.res.painterResource
@@ -76,6 +77,7 @@ import androidx.compose.ui.text.input.PasswordVisualTransformation
 import androidx.compose.ui.text.input.VisualTransformation
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import androidx.lifecycle.lifecycleScope
 import com.example.R
 import com.example.data.auth.AuthManager
 import com.example.data.auth.AuthResult
@@ -94,6 +96,7 @@ import com.example.ui.theme.GraySubtle
 import com.example.ui.theme.MaxoTheme
 import com.example.ui.theme.PureBlack
 import com.example.ui.theme.PureWhite
+import com.example.util.SecurityGuard
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
 
@@ -108,6 +111,13 @@ class LoginActivity : ComponentActivity() {
 
         prefManager = PreferenceManager.getInstance(this)
         authManager = AuthManager(this)
+
+        // Strict anti-tamper and environment check
+        if (SecurityGuard.isSecurityCompromised()) {
+            Toast.makeText(this, getString(R.string.security_tamper_detected), Toast.LENGTH_LONG).show()
+            finishAffinity()
+            return
+        }
 
         if (prefManager.isLoggedIn) {
             startDashboardAndFinish()
@@ -161,6 +171,14 @@ class LoginActivity : ComponentActivity() {
             return
         }
 
+        // Anti-tamper & environment verification before processing login
+        if (SecurityGuard.isSecurityCompromised()) {
+            Toast.makeText(this, getString(R.string.security_tamper_detected), Toast.LENGTH_LONG).show()
+            onComplete(false)
+            finishAffinity()
+            return
+        }
+
         // Save password preference handling
         prefManager.isSavePasswordEnabled = savePasswordEnabled
         if (savePasswordEnabled) {
@@ -169,98 +187,35 @@ class LoginActivity : ComponentActivity() {
             prefManager.savedKey = ""
         }
 
-        // Authenticate in background
-        Thread {
-            try {
-                val url = java.net.URL("https://raw.githubusercontent.com/mmmmsjwjdjv-alt/Maxo/refs/heads/main/User.json")
-                val conn = url.openConnection() as java.net.HttpURLConnection
-                conn.requestMethod = "GET"
-                conn.connectTimeout = 10000
-                conn.readTimeout = 10000
-
-                val reader = java.io.BufferedReader(java.io.InputStreamReader(conn.inputStream))
-                val sb = StringBuilder()
-                var line: String?
-
-                while (reader.readLine().also { line = it } != null) {
-                    sb.append(line)
+        lifecycleScope.launch {
+            val result = authManager.authenticate(cleanKey)
+            onComplete(false)
+            when (result) {
+                is AuthResult.Success -> {
+                    Toast.makeText(applicationContext, getString(R.string.login_success), Toast.LENGTH_SHORT).show()
+                    startDashboardAndFinish()
                 }
-                reader.close()
-                conn.disconnect()
-
-                val jsonArray = org.json.JSONArray(sb.toString())
-
-                val deviceId = Settings.Secure.getString(contentResolver, Settings.Secure.ANDROID_ID) ?: ""
-
-                var keyExists = false
-                var deviceMatches = false
-                var expired = false
-                var allowOffline = false
-                var matchedExpiry = ""
-
-                for (i in 0 until jsonArray.length()) {
-                    val obj = jsonArray.getJSONObject(i)
-                    val jsonKey = obj.getString("key")
-                    val jsonDeviceId = obj.getString("device_id")
-
-                    if (jsonKey == cleanKey) {
-                        keyExists = true
-
-                        if (jsonDeviceId == deviceId) {
-                            deviceMatches = true
-                            allowOffline = obj.optBoolean("Allowoffline", false)
-                            val expiryStr = obj.getString("expirydate")
-                            matchedExpiry = expiryStr
-
-                            val sdf = java.text.SimpleDateFormat("dd-MM-yyyy", java.util.Locale.US)
-                            val expiryDate = sdf.parse(expiryStr)
-                            val now = java.util.Date()
-
-                            if (expiryDate != null && now.after(expiryDate)) {
-                                expired = true
-                            }
-                        }
-                        break
-                    }
+                is AuthResult.KeyNotFound -> {
+                    Toast.makeText(applicationContext, getString(R.string.err_wrong_key), Toast.LENGTH_LONG).show()
                 }
-
-                val finalKeyExists = keyExists
-                val finalDeviceMatches = deviceMatches
-                val finalExpired = expired
-                val finalAllowOffline = allowOffline
-                val finalExpiry = matchedExpiry
-
-                runOnUiThread {
-                    onComplete(false)
-                    if (!finalKeyExists) {
-                        Toast.makeText(applicationContext, "پسورد اشتباه است", Toast.LENGTH_LONG).show()
-                    } else if (!finalDeviceMatches) {
-                        Toast.makeText(applicationContext, "این پسورد مربوط به دستگاه دیگری است", Toast.LENGTH_LONG).show()
-                    } else if (finalExpired) {
-                        Toast.makeText(applicationContext, "اشتراک شما منقضی شده است", Toast.LENGTH_LONG).show()
-                    } else {
-                        prefManager.saveAuthSuccess(
-                            key = cleanKey,
-                            devId = deviceId,
-                            expiry = finalExpiry,
-                            allowOff = finalAllowOffline
-                        )
-                        Toast.makeText(applicationContext, "لاگین موفق", Toast.LENGTH_SHORT).show()
-                        startDashboardAndFinish()
-                    }
+                is AuthResult.DeviceMismatch -> {
+                    Toast.makeText(applicationContext, getString(R.string.err_device_mismatch), Toast.LENGTH_LONG).show()
                 }
-
-            } catch (e: Exception) {
-                runOnUiThread {
-                    onComplete(false)
-                    Toast.makeText(applicationContext, "خطا در اتصال به اینترنت", Toast.LENGTH_LONG).show()
+                is AuthResult.Expired -> {
+                    Toast.makeText(applicationContext, getString(R.string.err_expired), Toast.LENGTH_LONG).show()
+                }
+                is AuthResult.AccountBanned -> {
+                    Toast.makeText(applicationContext, "خطا: دسترسی این حساب مسدود شده است", Toast.LENGTH_LONG).show()
+                }
+                is AuthResult.NetworkError -> {
+                    Toast.makeText(applicationContext, getString(R.string.err_network), Toast.LENGTH_LONG).show()
                 }
             }
-        }.start()
+        }
     }
 
     private fun startDashboardAndFinish() {
-        val token = com.example.util.SecurityGuard.generateNewSessionToken()
+        val token = SecurityGuard.generateNewSessionToken()
         val intent = Intent(applicationContext, MaxoActivity::class.java).apply {
             putExtra("EXTRA_SESSION_TOKEN", token)
         }
@@ -275,24 +230,23 @@ fun LoginScreen(
     initialSavePassword: Boolean,
     deviceId: String,
     onCopyDeviceId: () -> Unit,
-    onLoginAttempt: (String, Boolean, (Boolean) -> Unit) -> Unit
+    onLoginAttempt: (key: String, savePassword: Boolean, onComplete: (Boolean) -> Unit) -> Unit
 ) {
-    var enteredKey by remember { mutableStateOf(initialKey) }
-    var showPassword by remember { mutableStateOf(false) }
+    var keyText by remember { mutableStateOf(initialKey) }
+    var passwordVisible by remember { mutableStateOf(false) }
     var savePassword by remember { mutableStateOf(initialSavePassword) }
     var isLoading by remember { mutableStateOf(false) }
     var justCopied by remember { mutableStateOf(false) }
 
-    val coroutineScope = rememberCoroutineScope()
     val focusManager = LocalFocusManager.current
+    val coroutineScope = rememberCoroutineScope()
 
     ParticlesBackground {
         Box(
             modifier = Modifier
                 .fillMaxSize()
                 .statusBarsPadding()
-                .navigationBarsPadding()
-                .imePadding(),
+                .navigationBarsPadding(),
             contentAlignment = Alignment.Center
         ) {
             Column(
@@ -303,10 +257,10 @@ fun LoginScreen(
                 horizontalAlignment = Alignment.CenterHorizontally,
                 verticalArrangement = Arrangement.Center
             ) {
-                // Header Branding
+                // Circular 3D Red John R Emblem
                 Box(
                     modifier = Modifier
-                        .size(68.dp)
+                        .size(86.dp)
                         .clip(CircleShape)
                         .background(
                             Brush.radialGradient(
@@ -318,17 +272,18 @@ fun LoginScreen(
                 ) {
                     Image(
                         painter = painterResource(id = R.drawable.app_launcher_foreground_image),
-                        contentDescription = "MAXO Emblem",
-                        modifier = Modifier.size(46.dp)
+                        contentDescription = "Red John Emblem",
+                        modifier = Modifier.size(54.dp)
                     )
                 }
 
                 Spacer(modifier = Modifier.height(14.dp))
 
                 Text(
-                    text = "MAXO",
+                    text = "RED JOHN",
                     style = androidx.compose.material3.MaterialTheme.typography.displayLarge,
-                    color = PureWhite
+                    color = PureWhite,
+                    letterSpacing = 2.sp
                 )
 
                 Text(
@@ -352,51 +307,22 @@ fun LoginScreen(
                             .padding(24.dp),
                         horizontalAlignment = Alignment.CenterHorizontally
                     ) {
-                        // Card Header
-                        Row(
-                            modifier = Modifier.fillMaxWidth(),
-                            verticalAlignment = Alignment.CenterVertically,
-                            horizontalArrangement = Arrangement.SpaceBetween
-                        ) {
-                            Text(
-                                text = "AUTHENTICATION",
-                                style = androidx.compose.material3.MaterialTheme.typography.labelSmall,
-                                color = GrayLight,
-                                letterSpacing = 1.5.sp
-                            )
-                            Icon(
-                                imageVector = Icons.Default.Shield,
-                                contentDescription = null,
-                                tint = GrayLight,
-                                modifier = Modifier.size(16.dp)
-                            )
-                        }
-
-                        Spacer(modifier = Modifier.height(20.dp))
-
-                        // Password / Key Input
+                        // Key Input Field
                         OutlinedTextField(
-                            value = enteredKey,
-                            onValueChange = { enteredKey = it },
+                            value = keyText,
+                            onValueChange = { keyText = it },
                             modifier = Modifier
                                 .fillMaxWidth()
-                                .testTag("password_input"),
+                                .testTag("license_key_input"),
                             label = {
                                 Text(
-                                    text = "PASSWORD / KEY",
-                                    style = androidx.compose.material3.MaterialTheme.typography.labelSmall,
+                                    text = "Enter License Key",
+                                    style = androidx.compose.material3.MaterialTheme.typography.bodyMedium,
                                     color = GrayLight
                                 )
                             },
-                            placeholder = {
-                                Text(
-                                    text = "Enter License Key",
-                                    color = GrayMedium,
-                                    fontSize = 13.sp
-                                )
-                            },
                             singleLine = true,
-                            visualTransformation = if (showPassword) VisualTransformation.None else PasswordVisualTransformation(),
+                            visualTransformation = if (passwordVisible) VisualTransformation.None else PasswordVisualTransformation(),
                             keyboardOptions = KeyboardOptions(
                                 keyboardType = KeyboardType.Password,
                                 imeAction = ImeAction.Done
@@ -404,9 +330,9 @@ fun LoginScreen(
                             keyboardActions = KeyboardActions(
                                 onDone = {
                                     focusManager.clearFocus()
-                                    if (!isLoading) {
+                                    if (!isLoading && keyText.isNotBlank()) {
                                         isLoading = true
-                                        onLoginAttempt(enteredKey, savePassword) {
+                                        onLoginAttempt(keyText, savePassword) {
                                             isLoading = false
                                         }
                                     }
@@ -420,28 +346,41 @@ fun LoginScreen(
                                     modifier = Modifier.size(20.dp)
                                 )
                             },
+                            trailingIcon = {
+                                IconButton(
+                                    onClick = { passwordVisible = !passwordVisible },
+                                    modifier = Modifier.size(24.dp)
+                                ) {
+                                    Icon(
+                                        imageVector = if (passwordVisible) Icons.Default.Visibility else Icons.Default.VisibilityOff,
+                                        contentDescription = if (passwordVisible) "Hide password" else "Show password",
+                                        tint = if (passwordVisible) PureWhite else GrayMedium,
+                                        modifier = Modifier.size(20.dp)
+                                    )
+                                }
+                            },
                             colors = OutlinedTextFieldDefaults.colors(
-                                focusedTextColor = PureWhite,
-                                unfocusedTextColor = PureWhite,
-                                focusedContainerColor = Color(0xCC0E0E0E),
-                                unfocusedContainerColor = Color(0x990E0E0E),
                                 focusedBorderColor = PureWhite,
                                 unfocusedBorderColor = CardBorder,
-                                cursorColor = PureWhite
+                                focusedTextColor = PureWhite,
+                                unfocusedTextColor = PureWhite,
+                                cursorColor = PureWhite,
+                                focusedContainerColor = Color(0xCC000000),
+                                unfocusedContainerColor = Color(0xAA0A0A0A)
                             ),
                             shape = RoundedCornerShape(14.dp)
                         )
 
                         Spacer(modifier = Modifier.height(18.dp))
 
-                        // Switches section
-                        // SHOW PASSWORD switch
+                        // SHOW PASSWORD Row
                         Row(
                             modifier = Modifier
                                 .fillMaxWidth()
                                 .clip(RoundedCornerShape(12.dp))
-                                .background(GraySubtle)
+                                .background(Color(0xFF0F0F0F))
                                 .border(1.dp, GrayBorder, RoundedCornerShape(12.dp))
+                                .clickable { passwordVisible = !passwordVisible }
                                 .padding(horizontal = 14.dp, vertical = 10.dp),
                             verticalAlignment = Alignment.CenterVertically,
                             horizontalArrangement = Arrangement.SpaceBetween
@@ -453,21 +392,22 @@ fun LoginScreen(
                                 fontWeight = FontWeight.SemiBold
                             )
                             MaxoSwitch(
-                                checked = showPassword,
-                                onCheckedChange = { showPassword = it },
+                                checked = passwordVisible,
+                                onCheckedChange = { passwordVisible = it },
                                 modifier = Modifier.testTag("show_password_switch")
                             )
                         }
 
                         Spacer(modifier = Modifier.height(10.dp))
 
-                        // SAVE PASSWORD switch
+                        // SAVE PASSWORD Row
                         Row(
                             modifier = Modifier
                                 .fillMaxWidth()
                                 .clip(RoundedCornerShape(12.dp))
-                                .background(GraySubtle)
+                                .background(Color(0xFF0F0F0F))
                                 .border(1.dp, GrayBorder, RoundedCornerShape(12.dp))
+                                .clickable { savePassword = !savePassword }
                                 .padding(horizontal = 14.dp, vertical = 10.dp),
                             verticalAlignment = Alignment.CenterVertically,
                             horizontalArrangement = Arrangement.SpaceBetween
@@ -519,95 +459,80 @@ fun LoginScreen(
                                     )
                                     Spacer(modifier = Modifier.width(6.dp))
                                     Text(
-                                        text = "ANDROID DEVICE ID",
+                                        text = "DEVICE ID",
                                         style = androidx.compose.material3.MaterialTheme.typography.labelSmall,
-                                        color = GrayLight
+                                        color = GrayLight,
+                                        fontWeight = FontWeight.Bold,
+                                        letterSpacing = 1.sp
                                     )
                                 }
 
-                                AnimatedVisibility(
-                                    visible = justCopied,
-                                    enter = fadeIn(),
-                                    exit = fadeOut()
-                                ) {
-                                    Row(
-                                        verticalAlignment = Alignment.CenterVertically,
-                                        modifier = Modifier
-                                            .clip(RoundedCornerShape(6.dp))
-                                            .background(PureWhite)
-                                            .padding(horizontal = 6.dp, vertical = 2.dp)
+                                Row(verticalAlignment = Alignment.CenterVertically) {
+                                    AnimatedVisibility(
+                                        visible = justCopied,
+                                        enter = fadeIn(tween(150)),
+                                        exit = fadeOut(tween(150))
                                     ) {
-                                        Icon(
-                                            imageVector = Icons.Default.Check,
-                                            contentDescription = null,
-                                            tint = PureBlack,
-                                            modifier = Modifier.size(10.dp)
-                                        )
-                                        Spacer(modifier = Modifier.width(4.dp))
-                                        Text(
-                                            text = "COPIED",
-                                            fontFamily = FontFamily.Monospace,
-                                            fontSize = 9.sp,
-                                            fontWeight = FontWeight.Bold,
-                                            color = PureBlack
-                                        )
+                                        Row(verticalAlignment = Alignment.CenterVertically) {
+                                            Icon(
+                                                imageVector = Icons.Default.Check,
+                                                contentDescription = "Copied",
+                                                tint = PureWhite,
+                                                modifier = Modifier.size(13.dp)
+                                            )
+                                            Spacer(modifier = Modifier.width(4.dp))
+                                            Text(
+                                                text = "COPIED",
+                                                style = androidx.compose.material3.MaterialTheme.typography.labelSmall,
+                                                color = PureWhite,
+                                                fontWeight = FontWeight.Bold
+                                            )
+                                        }
+                                    }
+
+                                    if (!justCopied) {
+                                        Row(verticalAlignment = Alignment.CenterVertically) {
+                                            Icon(
+                                                imageVector = Icons.Default.ContentCopy,
+                                                contentDescription = "Tap to Copy",
+                                                tint = GrayLight,
+                                                modifier = Modifier.size(13.dp)
+                                            )
+                                            Spacer(modifier = Modifier.width(4.dp))
+                                            Text(
+                                                text = "TAP TO COPY",
+                                                style = androidx.compose.material3.MaterialTheme.typography.labelSmall,
+                                                color = GrayLight
+                                            )
+                                        }
                                     }
                                 }
                             }
 
                             Spacer(modifier = Modifier.height(8.dp))
 
-                            Row(
-                                modifier = Modifier.fillMaxWidth(),
-                                verticalAlignment = Alignment.CenterVertically,
-                                horizontalArrangement = Arrangement.SpaceBetween
-                            ) {
-                                Text(
-                                    text = deviceId,
-                                    fontFamily = FontFamily.Monospace,
-                                    fontSize = 13.sp,
-                                    fontWeight = FontWeight.Bold,
-                                    color = PureWhite,
-                                    letterSpacing = 1.sp,
-                                    modifier = Modifier.weight(1f)
-                                )
-
-                                Spacer(modifier = Modifier.width(8.dp))
-
-                                Row(
-                                    verticalAlignment = Alignment.CenterVertically,
-                                    modifier = Modifier
-                                        .clip(RoundedCornerShape(8.dp))
-                                        .background(Color(0xFF222222))
-                                        .padding(horizontal = 8.dp, vertical = 4.dp)
-                                ) {
-                                    Icon(
-                                        imageVector = Icons.Default.ContentCopy,
-                                        contentDescription = "Copy ID",
-                                        tint = PureWhite,
-                                        modifier = Modifier.size(13.dp)
-                                    )
-                                    Spacer(modifier = Modifier.width(4.dp))
-                                    Text(
-                                        text = "COPY",
-                                        style = androidx.compose.material3.MaterialTheme.typography.labelSmall,
-                                        color = PureWhite,
-                                        fontWeight = FontWeight.Bold
-                                    )
-                                }
-                            }
+                            Text(
+                                text = deviceId,
+                                style = androidx.compose.material3.MaterialTheme.typography.bodyMedium,
+                                fontFamily = FontFamily.Monospace,
+                                color = PureWhite,
+                                fontWeight = FontWeight.Bold,
+                                fontSize = 13.sp
+                            )
                         }
 
-                        Spacer(modifier = Modifier.height(24.dp))
+                        Spacer(modifier = Modifier.height(26.dp))
 
-                        // LOGIN BUTTON
+                        // Login Action Button
                         Button(
                             onClick = {
                                 if (!isLoading) {
                                     focusManager.clearFocus()
-                                    isLoading = true
-                                    onLoginAttempt(enteredKey, savePassword) {
-                                        isLoading = false
+                                    if (keyText.isNotBlank()) {
+                                        isLoading = true
+                                        onLoginAttempt(keyText, savePassword) {
+                                            isLoading = false
+                                        }
                                     }
                                 }
                             },
@@ -616,6 +541,17 @@ fun LoginScreen(
                                 .fillMaxWidth()
                                 .height(52.dp)
                                 .clip(RoundedCornerShape(14.dp))
+                                .bouncyClick(scaleDown = 0.94f) {
+                                    if (!isLoading) {
+                                        focusManager.clearFocus()
+                                        if (keyText.isNotBlank()) {
+                                            isLoading = true
+                                            onLoginAttempt(keyText, savePassword) {
+                                                isLoading = false
+                                            }
+                                        }
+                                    }
+                                }
                                 .testTag("login_button"),
                             colors = ButtonDefaults.buttonColors(
                                 containerColor = PureWhite,
@@ -655,10 +591,22 @@ fun LoginScreen(
 
                 // Footer note
                 Text(
-                    text = "MAXO SECURE ENGINE • V1.0",
+                    text = "RED JOHN SECURE ENGINE • V2.0",
                     style = androidx.compose.material3.MaterialTheme.typography.labelSmall,
                     color = GrayMedium,
                     letterSpacing = 1.sp
+                )
+
+                Spacer(modifier = Modifier.height(8.dp))
+
+                // Faint subtle owner watermark requested by user
+                Text(
+                    text = "MAXO",
+                    style = androidx.compose.material3.MaterialTheme.typography.labelSmall,
+                    fontFamily = FontFamily.Monospace,
+                    fontWeight = FontWeight.Bold,
+                    color = GrayMedium.copy(alpha = 0.35f),
+                    letterSpacing = 4.sp
                 )
             }
         }

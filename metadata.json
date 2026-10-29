@@ -1,6 +1,6 @@
 {
-  "name": "MAXO",
-  "description": "MAXO Ultra-Luxury Control System, Advanced Floating Utility Suite, and Telemetry Engine.",
+  "name": "Red John",
+  "description": "Red John Luxury Control System, Multi-Layer Security Engine, and Floating Utility Suite.",
   "requestFramePermissions": [],
   "majorCapabilities": ["MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"]
 }

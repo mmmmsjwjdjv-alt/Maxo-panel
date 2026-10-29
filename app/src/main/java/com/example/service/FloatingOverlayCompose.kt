@@ -314,7 +314,7 @@ private fun ExpandedControlSuite(
                     Row(verticalAlignment = Alignment.CenterVertically) {
                         Image(
                             painter = painterResource(id = R.drawable.app_launcher_foreground_image),
-                            contentDescription = "MAXO",
+                            contentDescription = "Red John",
                             modifier = Modifier
                                 .size(24.dp)
                                 .clip(CircleShape)
@@ -322,11 +322,11 @@ private fun ExpandedControlSuite(
                         Spacer(modifier = Modifier.width(7.dp))
                         Column {
                             Text(
-                                text = "MAXO",
+                                text = "RED JOHN",
                                 fontFamily = FontFamily.SansSerif,
                                 fontWeight = FontWeight.Black,
-                                fontSize = 14.sp,
-                                letterSpacing = 2.5.sp,
+                                fontSize = 13.5.sp,
+                                letterSpacing = 2.sp,
                                 color = PureWhite
                             )
                             Row(verticalAlignment = Alignment.CenterVertically) {
